@@ -1,0 +1,45 @@
+{
+  "name": "n8n-nodes-waapy",
+  "version": "0.1.0",
+  "description": "Custom n8n nodes for the Waapy API",
+  "keywords": [
+    "n8n-community-node-package"
+  ],
+  "license": "MIT",
+  "homepage": "https://bravonet.digital",
+  "author": {
+    "name": "BravoNet Solution",
+    "email": "support@bravonet.my"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "n8n-node build",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/WaapyApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Waapy/Waapy.node.js",
+      "dist/nodes/WaapyTrigger/WaapyTrigger.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "*",
+    "@types/node": "^20.0.0",
+    "eslint": "9.32.0",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
