@@ -7,7 +7,7 @@ import {
 
 export class WaapyApi implements ICredentialType {
 	name = 'waapyApi';
-	displayName = 'Waapy API';
+	displayName = 'WaaPy API';
 	documentationUrl = 'https://waapy.co'; 
 	properties: INodeProperties[] = [
 		{
@@ -16,7 +16,7 @@ export class WaapyApi implements ICredentialType {
 			type: 'string',
 			default: 'https://api.waapy.co',
 			placeholder: 'https://api.waapy.co',
-			description: 'The base URL of the Waapy API',
+			description: 'The base URL of the WaaPy API',
 		},
 		{
 			displayName: 'API Key',
@@ -26,7 +26,7 @@ export class WaapyApi implements ICredentialType {
 			typeOptions: {
 				password: true,
 			},
-			description: 'The API Key to authenticate with Waapy',
+			description: 'The API Key to authenticate with WaaPy',
 		},
 	];
 

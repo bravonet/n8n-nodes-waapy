@@ -1,14 +1,14 @@
 {
   "name": "n8n-nodes-waapy",
   "version": "0.1.0",
-  "description": "Custom n8n nodes for the Waapy API",
+  "description": "Custom n8n nodes for the WaaPy API",
   "keywords": [
     "n8n-community-node-package"
   ],
   "license": "MIT",
   "homepage": "https://bravonet.digital",
   "author": {
-    "name": "BravoNet Solution",
+    "name": "Bravo Net Solution",
     "email": "support@bravonet.my"
   },
   "main": "index.js",

@@ -10,14 +10,14 @@ import {
 
 export class WaapyTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Waapy Trigger',
+		displayName: 'WaaPy Trigger',
 		name: 'waapyTrigger',
 		icon: 'file:waapy-logo.svg',
 		group: ['trigger'],
 		version: 1,
-		description: 'Starts the workflow when Waapy events occur (e.g., incoming messages)',
+		description: 'Starts the workflow when WaaPy events occur (e.g., incoming messages)',
 		defaults: {
-			name: 'Waapy Trigger',
+			name: 'WaaPy Trigger',
 		},
 		inputs: [],
 		outputs: ['main'],

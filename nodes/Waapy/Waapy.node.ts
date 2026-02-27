@@ -11,15 +11,15 @@ import {
 
 export class Waapy implements INodeType {
   description: INodeTypeDescription = {
-    displayName: "Waapy",
+    displayName: "WaaPy",
     name: "waapy",
     icon: "file:waapy-logo.svg",
     group: ["transform"],
     version: 1,
     subtitle: '={{$parameter["operation"]}}',
-    description: "Interact with the Waapy API to send WhatsApp messages",
+    description: "Interact with the WaaPy API to send WhatsApp messages",
     defaults: {
-      name: "Waapy",
+      name: "WaaPy",
     },
     inputs: ["main"],
     outputs: ["main"],
