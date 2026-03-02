@@ -6,7 +6,7 @@ It was heavily inspired by the n8n-nodes-evolution-api package.
 ## Features
 
 - **WaaPy Trigger**: Starts workflows when a WaaPy webhook is received (e.g. for incoming messages).
-- **WaaPy (Action)**: Send WhatsApp messages (Text, Image) using the WaaPy API.
+- **WaaPy (Action)**: Send WhatsApp messages (Text, Image, Template) using the WaaPy API.
 
 ## Installation
 
