@@ -17,7 +17,9 @@
     "build:watch": "tsc --watch",
     "dev": "n8n-node dev",
     "lint": "n8n-node lint",
-    "lint:fix": "n8n-node lint --fix"
+    "lint:fix": "n8n-node lint --fix",
+    "release": "release-it",
+    "prepare": "husky"
   },
   "files": [
     "dist"
@@ -33,10 +35,15 @@
     ]
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
     "@n8n/node-cli": "*",
+    "@release-it/conventional-changelog": "^10.0.5",
     "@types/node": "^20.0.0",
     "eslint": "9.32.0",
+    "husky": "^9.1.7",
     "prettier": "3.6.2",
+    "release-it": "^19.2.4",
     "typescript": "5.9.2"
   },
   "peerDependencies": {
