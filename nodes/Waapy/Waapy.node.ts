@@ -32,6 +32,11 @@ type TemplateListItem = {
   active?: boolean;
 };
 
+type QuickReplyButtonInput = {
+  id: string;
+  title: string;
+};
+
 type DynamicTemplateRequirements = {
   hasHeader: boolean;
   hasFooter: boolean;
@@ -70,7 +75,10 @@ const normalizeButtonSubType = (value: unknown): string => {
     return "quick_reply";
   }
 
-  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
   if (normalized.includes("url")) {
     return "url";
   }
@@ -84,7 +92,9 @@ const normalizeButtonSubType = (value: unknown): string => {
   return normalized || "quick_reply";
 };
 
-const extractTemplateComponents = (templateDetails: unknown): TemplateComponent[] => {
+const extractTemplateComponents = (
+  templateDetails: unknown,
+): TemplateComponent[] => {
   if (typeof templateDetails !== "object" || templateDetails === null) {
     return [];
   }
@@ -132,7 +142,6 @@ const extractTemplateName = (
   return fallbackName;
 };
 
-
 const inspectTemplateRequirements = (
   templateComponents: TemplateComponent[],
 ): DynamicTemplateRequirements => {
@@ -141,7 +150,8 @@ const inspectTemplateRequirements = (
   let hasButtons = false;
   let headerParamCount = 0;
   let bodyParamCount = 0;
-  const buttonRequirements: DynamicTemplateRequirements["buttonRequirements"] = [];
+  const buttonRequirements: DynamicTemplateRequirements["buttonRequirements"] =
+    [];
 
   for (const component of templateComponents) {
     const componentType = `${component.type ?? ""}`.toUpperCase();
@@ -558,7 +568,8 @@ export class Waapy implements INodeType {
                 name: "value",
                 type: "string",
                 default: "",
-                description: "Dynamic value for the selected button placeholder",
+                description:
+                  "Dynamic value for the selected button placeholder",
               },
             ],
           },
@@ -585,6 +596,46 @@ export class Waapy implements INodeType {
         },
         default: "",
         description: "The text message to send",
+      },
+      {
+        displayName: "Reply Buttons",
+        name: "textButtons",
+        type: "fixedCollection",
+        default: {},
+        typeOptions: {
+          multipleValues: true,
+        },
+        options: [
+          {
+            name: "values",
+            displayName: "Values",
+            values: [
+              {
+                displayName: "Reply Button ID",
+                name: "id",
+                type: "string",
+                default: "",
+                description:
+                  "Internal reply button value returned in the webhook or message response when the user taps this button",
+              },
+              {
+                displayName: "Reply Button Title",
+                name: "title",
+                type: "string",
+                default: "",
+                description: "Visible reply button text shown to the recipient",
+              },
+            ],
+          },
+        ],
+        displayOptions: {
+          show: {
+            resource: ["message"],
+            operation: ["sendText"],
+          },
+        },
+        description:
+          "Optional reply buttons for this text message. Maximum 10 buttons",
       },
       {
         displayName: "Image Source",
@@ -758,6 +809,32 @@ export class Waapy implements INodeType {
 
           if (operation === "sendText") {
             const text = this.getNodeParameter("text", i) as string;
+            const textButtons =
+              (
+                this.getNodeParameter("textButtons", i, {}) as {
+                  values?: QuickReplyButtonInput[];
+                }
+              ).values ?? [];
+            const sanitizedTextButtons = textButtons
+              .map((button) => ({
+                id: `${button.id ?? ""}`.trim(),
+                title: `${button.title ?? ""}`.trim(),
+              }))
+              .filter(
+                (button) => button.id.length > 0 && button.title.length > 0,
+              )
+              .map((button) => ({
+                id: button.id,
+                title: button.title,
+              }));
+
+            if (sanitizedTextButtons.length > 10) {
+              throw new NodeOperationError(
+                this.getNode(),
+                "Send Text supports a maximum of 10 reply buttons.",
+              );
+            }
+
             responseData = await this.helpers.httpRequest({
               method: "POST",
               headers: {
@@ -772,6 +849,11 @@ export class Waapy implements INodeType {
                 message: {
                   body: text,
                   type: "text",
+                  ...(sanitizedTextButtons.length > 0
+                    ? {
+                        buttons: sanitizedTextButtons,
+                      }
+                    : {}),
                 },
               },
               json: true,
@@ -843,64 +925,87 @@ export class Waapy implements INodeType {
               i,
               true,
             ) as boolean;
-            const headerType = this.getNodeParameter("headerType", i, "text") as string;
-            
+            const headerType = this.getNodeParameter(
+              "headerType",
+              i,
+              "text",
+            ) as string;
+
             let sanitizedHeaderParameters: string[] = [];
             let headerPayload: Record<string, string> = {};
 
             if (headerType === "text") {
-              const headerParameters = (
-                this.getNodeParameter("headerParameters", i, {}) as {
-                  values?: Array<{ value: string }>;
-                }
-              ).values ?? [];
+              const headerParameters =
+                (
+                  this.getNodeParameter("headerParameters", i, {}) as {
+                    values?: Array<{ value: string }>;
+                  }
+                ).values ?? [];
               sanitizedHeaderParameters = headerParameters
                 .map((parameter) => `${parameter.value ?? ""}`.trim())
                 .filter((value) => value.length > 0);
-              
+
               if (sanitizedHeaderParameters.length > 0) {
                 sanitizedHeaderParameters.forEach((value, index) => {
                   headerPayload[`${index + 1}`] = value;
                 });
               }
             } else if (headerType === "image") {
-              const imageUrl = this.getNodeParameter("headerImageUrl", i, "") as string;
+              const imageUrl = this.getNodeParameter(
+                "headerImageUrl",
+                i,
+                "",
+              ) as string;
               if (imageUrl) {
                 sanitizedHeaderParameters = [imageUrl];
                 headerPayload = { image: imageUrl };
               }
             } else if (headerType === "video") {
-              const videoUrl = this.getNodeParameter("headerVideoUrl", i, "") as string;
+              const videoUrl = this.getNodeParameter(
+                "headerVideoUrl",
+                i,
+                "",
+              ) as string;
               if (videoUrl) {
                 sanitizedHeaderParameters = [videoUrl];
                 headerPayload = { video: videoUrl };
               }
             } else if (headerType === "document") {
-              const documentUrl = this.getNodeParameter("headerDocumentUrl", i, "") as string;
-              const documentFilename = this.getNodeParameter("headerDocumentFilename", i, "") as string;
+              const documentUrl = this.getNodeParameter(
+                "headerDocumentUrl",
+                i,
+                "",
+              ) as string;
+              const documentFilename = this.getNodeParameter(
+                "headerDocumentFilename",
+                i,
+                "",
+              ) as string;
               if (documentUrl) {
                 sanitizedHeaderParameters = [documentUrl];
                 headerPayload = { document: documentUrl };
                 if (documentFilename) {
-                   headerPayload.filename = documentFilename;
+                  headerPayload.filename = documentFilename;
                 }
               }
             }
-            const bodyParameters = (
-              this.getNodeParameter("bodyParameters", i, {}) as {
-                values?: Array<{ value: string }>;
-              }
-            ).values ?? [];
-            const buttonParameters = (
-              this.getNodeParameter("buttonParameters", i, {}) as {
-                values?: Array<{
-                  index: number;
-                  position?: number;
-                  subType?: string;
-                  value: string;
-                }>;
-              }
-            ).values ?? [];
+            const bodyParameters =
+              (
+                this.getNodeParameter("bodyParameters", i, {}) as {
+                  values?: Array<{ value: string }>;
+                }
+              ).values ?? [];
+            const buttonParameters =
+              (
+                this.getNodeParameter("buttonParameters", i, {}) as {
+                  values?: Array<{
+                    index: number;
+                    position?: number;
+                    subType?: string;
+                    value: string;
+                  }>;
+                }
+              ).values ?? [];
             const normalizedButtonParameters = buttonParameters as Array<{
               index: number;
               position?: number;
@@ -908,15 +1013,19 @@ export class Waapy implements INodeType {
               value: string;
             }>;
 
-            const fetchTemplateDetail = async (templateId: string): Promise<unknown> =>
+            const fetchTemplateDetail = async (
+              templateId: string,
+            ): Promise<unknown> =>
               await this.helpers.httpRequest({
                 method: "GET",
                 headers: {
                   Authorization: `Bearer ${credentials.apikey}`,
                 },
-                url: `${baseUrl}/n8n/templates/${templateId}?connectionName=${this.getNodeParameter("connectionName", i, "", {
-                  extractValue: true,
-                }) as string}`,
+                url: `${baseUrl}/n8n/templates/${templateId}?connectionName=${
+                  this.getNodeParameter("connectionName", i, "", {
+                    extractValue: true,
+                  }) as string
+                }`,
                 json: true,
               });
 
@@ -924,7 +1033,9 @@ export class Waapy implements INodeType {
             let selectedTemplateName: string | undefined;
 
             try {
-              templateDetails = await fetchTemplateDetail(selectedTemplateValue);
+              templateDetails = await fetchTemplateDetail(
+                selectedTemplateValue,
+              );
             } catch (error) {
               const fallbackTemplateList = (await this.helpers.httpRequest({
                 method: "GET",
@@ -951,9 +1062,10 @@ export class Waapy implements INodeType {
               templateDetails = await fetchTemplateDetail(matchedTemplate.id);
             }
 
-            const templateComponents = extractTemplateComponents(templateDetails);
-            const templateRequirements = inspectTemplateRequirements(templateComponents);
-
+            const templateComponents =
+              extractTemplateComponents(templateDetails);
+            const templateRequirements =
+              inspectTemplateRequirements(templateComponents);
 
             const sanitizedBodyParameters = bodyParameters
               .map((parameter) => `${parameter.value ?? ""}`.trim())
@@ -975,7 +1087,8 @@ export class Waapy implements INodeType {
 
               const groupedValues = groupedButtonParameters.get(index) ?? [];
               groupedValues.push({
-                position: Number.isInteger(position) && position > 0 ? position : 1,
+                position:
+                  Number.isInteger(position) && position > 0 ? position : 1,
                 subType: normalizeButtonSubType(parameter.subType),
                 value,
               });
@@ -989,7 +1102,8 @@ export class Waapy implements INodeType {
 
             if (strictTemplateValidation) {
               if (
-                sanitizedHeaderParameters.length !== templateRequirements.headerParamCount
+                sanitizedHeaderParameters.length !==
+                templateRequirements.headerParamCount
               ) {
                 throw new NodeOperationError(
                   this.getNode(),
@@ -997,7 +1111,10 @@ export class Waapy implements INodeType {
                 );
               }
 
-              if (sanitizedBodyParameters.length !== templateRequirements.bodyParamCount) {
+              if (
+                sanitizedBodyParameters.length !==
+                templateRequirements.bodyParamCount
+              ) {
                 throw new NodeOperationError(
                   this.getNode(),
                   `Body requires ${templateRequirements.bodyParamCount} parameter(s), but ${sanitizedBodyParameters.length} provided.`,
@@ -1007,7 +1124,9 @@ export class Waapy implements INodeType {
               for (const buttonRequirement of templateRequirements.buttonRequirements) {
                 const providedParameters =
                   groupedButtonParameters.get(buttonRequirement.index) ?? [];
-                if (providedParameters.length !== buttonRequirement.paramCount) {
+                if (
+                  providedParameters.length !== buttonRequirement.paramCount
+                ) {
                   throw new NodeOperationError(
                     this.getNode(),
                     `Button index ${buttonRequirement.index} requires ${buttonRequirement.paramCount} parameter(s), but ${providedParameters.length} provided.`,
@@ -1045,11 +1164,14 @@ export class Waapy implements INodeType {
 
             if (groupedButtonParameters.size > 0) {
               dynamicData.buttons = {};
-              for (const [index, values] of [...groupedButtonParameters.entries()].sort(
-                ([leftIndex], [rightIndex]) => leftIndex - rightIndex,
-              )) {
+              for (const [index, values] of [
+                ...groupedButtonParameters.entries(),
+              ].sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)) {
                 values.forEach((parameter) => {
-                  const key = values.length > 1 ? `${index}_${parameter.position}` : `${index + 1}`;
+                  const key =
+                    values.length > 1
+                      ? `${index}_${parameter.position}`
+                      : `${index + 1}`;
                   dynamicData.buttons[key] = parameter.value;
                 });
               }

@@ -63,6 +63,13 @@ Required fields:
 - **Recipient Number**
 - **Message Text**
 
+Optional:
+
+- **Reply Buttons** for quick reply options on normal text messages
+- **Reply Button ID** is the internal value returned when the user taps the button
+- **Reply Button Title** is the visible text shown on the button
+- Maximum **10 reply buttons** per message
+
 #### B. Send Image
 
 Use this when you want to send an image.
@@ -138,6 +145,17 @@ Behavior:
 3. Select `Operation: Send Text`.
 4. Fill connection, recipient, text.
 5. Execute node.
+
+### Send a text message with quick reply buttons
+
+1. Add **WaaPy** node.
+2. Select `Operation: Send Text`.
+3. Fill connection, recipient, and message text.
+4. Add one or more entries under **Reply Buttons**.
+5. For each button, provide **Reply Button ID** and **Reply Button Title**.
+6. `Reply Button ID` is used as the returned selection value. `Reply Button Title` is what the recipient sees.
+7. You can send up to `10` reply buttons in one message.
+8. Execute node.
 
 ### Send a template with dynamic values
 
