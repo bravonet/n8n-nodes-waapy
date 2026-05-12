@@ -772,7 +772,7 @@ export class Waapy implements INodeType {
             );
 
           const templates = ensureArray<TemplateListItem>(
-            (responseData as { whatsappTemplates?: unknown }).whatsappTemplates,
+            (responseData as { templates?: unknown }).templates,
           );
 
           const results: INodePropertyOptions[] = templates
