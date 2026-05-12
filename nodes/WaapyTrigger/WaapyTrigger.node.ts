@@ -116,13 +116,14 @@ export class WaapyTrigger implements INodeType {
             const endpoint = `/n8n/webhooks/${webhookData.webhookId}`;
             const options = {
               method: "GET" as const,
-              headers: {
-                Authorization: `Bearer ${credentials.apikey}`,
-              },
               url: `${baseUrl}${endpoint}`,
               json: true,
             };
-            await this.helpers.httpRequest(options);
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              options,
+            );
             return true;
           } catch (error) {
             if (isNotFoundError(error)) {
@@ -154,14 +155,15 @@ export class WaapyTrigger implements INodeType {
 
           if (webhookData.webhookId !== undefined) {
             try {
-              await this.helpers.httpRequest({
-                method: "DELETE" as const,
-                headers: {
-                  Authorization: `Bearer ${credentials.apikey}`,
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "DELETE" as const,
+                  url: `${baseUrl}/n8n/webhooks/${webhookData.webhookId}`,
+                  json: true,
                 },
-                url: `${baseUrl}/n8n/webhooks/${webhookData.webhookId}`,
-                json: true,
-              });
+              );
             } catch (error) {
               if (!isNotFoundError(error)) {
                 throw new NodeApiError(this.getNode(), error as any, {
@@ -175,9 +177,6 @@ export class WaapyTrigger implements INodeType {
 
           const options = {
             method: "POST" as const,
-            headers: {
-              Authorization: `Bearer ${credentials.apikey}`,
-            },
             url: `${baseUrl}/n8n/webhooks`,
             body: {
               url: webhookUrl,
@@ -186,7 +185,12 @@ export class WaapyTrigger implements INodeType {
             json: true,
           };
 
-          const responseData = await this.helpers.httpRequest(options);
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              options,
+            );
 
           if (responseData.id === undefined) {
             throw new NodeApiError(this.getNode(), responseData as any, {
@@ -209,13 +213,14 @@ export class WaapyTrigger implements INodeType {
             const baseUrl = credentials["server-url"] as string;
             const options = {
               method: "DELETE" as const,
-              headers: {
-                Authorization: `Bearer ${credentials.apikey}`,
-              },
               url: `${baseUrl}/n8n/webhooks/${webhookData.webhookId}`,
               json: true,
             };
-            await this.helpers.httpRequest(options);
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              options,
+            );
           } catch (error) {
             if (!isNotFoundError(error)) {
               throw new NodeApiError(this.getNode(), error as any);

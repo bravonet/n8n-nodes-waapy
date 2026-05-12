@@ -722,14 +722,16 @@ export class Waapy implements INodeType {
         }
 
         try {
-          const responseData = await this.helpers.httpRequest({
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${credentials.apikey}`,
-            },
-            url,
-            json: true,
-          });
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              {
+                method: "GET",
+                url,
+                json: true,
+              },
+            );
 
           const results: INodePropertyOptions[] = (
             responseData.connections || []
@@ -758,14 +760,16 @@ export class Waapy implements INodeType {
         }
 
         try {
-          const responseData = await this.helpers.httpRequest({
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${credentials.apikey}`,
-            },
-            url,
-            json: true,
-          });
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              {
+                method: "GET",
+                url,
+                json: true,
+              },
+            );
 
           const templates = ensureArray<TemplateListItem>(
             (responseData as { whatsappTemplates?: unknown }).whatsappTemplates,
@@ -835,29 +839,36 @@ export class Waapy implements INodeType {
               );
             }
 
-            responseData = await this.helpers.httpRequest({
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${credentials.apikey}`,
-              },
-              url: `${baseUrl}/n8n/messages/send-text`,
-              body: {
-                connectionName: this.getNodeParameter("connectionName", i, "", {
-                  extractValue: true,
-                }) as string,
-                recipient: toNumber,
-                message: {
-                  body: text,
-                  type: "text",
-                  ...(sanitizedTextButtons.length > 0
-                    ? {
-                        buttons: sanitizedTextButtons,
-                      }
-                    : {}),
+            responseData =
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "POST",
+                  url: `${baseUrl}/n8n/messages/send-text`,
+                  body: {
+                    connectionName: this.getNodeParameter(
+                      "connectionName",
+                      i,
+                      "",
+                      {
+                        extractValue: true,
+                      },
+                    ) as string,
+                    recipient: toNumber,
+                    message: {
+                      body: text,
+                      type: "text",
+                      ...(sanitizedTextButtons.length > 0
+                        ? {
+                            buttons: sanitizedTextButtons,
+                          }
+                        : {}),
+                    },
+                  },
+                  json: true,
                 },
-              },
-              json: true,
-            });
+              );
           } else if (operation === "sendImage") {
             const imageUploadMethod = this.getNodeParameter(
               "imageUploadMethod",
@@ -902,15 +913,17 @@ export class Waapy implements INodeType {
               body.message.mediaBase64 = `data:${binaryData.mimeType};base64,${binaryData.data}`;
             }
 
-            responseData = await this.helpers.httpRequest({
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${credentials.apikey}`,
-              },
-              url: `${baseUrl}/n8n/messages/send-text`,
-              body: body,
-              json: true,
-            });
+            responseData =
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "POST",
+                  url: `${baseUrl}/n8n/messages/send-text`,
+                  body: body,
+                  json: true,
+                },
+              );
           } else if (operation === "sendTemplate") {
             const selectedTemplateValue = this.getNodeParameter(
               "templateName",
@@ -1016,18 +1029,19 @@ export class Waapy implements INodeType {
             const fetchTemplateDetail = async (
               templateId: string,
             ): Promise<unknown> =>
-              await this.helpers.httpRequest({
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${credentials.apikey}`,
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "GET",
+                  url: `${baseUrl}/n8n/templates/${templateId}?connectionName=${
+                    this.getNodeParameter("connectionName", i, "", {
+                      extractValue: true,
+                    }) as string
+                  }`,
+                  json: true,
                 },
-                url: `${baseUrl}/n8n/templates/${templateId}?connectionName=${
-                  this.getNodeParameter("connectionName", i, "", {
-                    extractValue: true,
-                  }) as string
-                }`,
-                json: true,
-              });
+              );
 
             let templateDetails: unknown;
             let selectedTemplateName: string | undefined;
@@ -1037,16 +1051,18 @@ export class Waapy implements INodeType {
                 selectedTemplateValue,
               );
             } catch (error) {
-              const fallbackTemplateList = (await this.helpers.httpRequest({
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${credentials.apikey}`,
-                },
-                url: `${baseUrl}/n8n/templates?searchName=${encodeURIComponent(selectedTemplateValue)}`,
-                json: true,
-              })) as {
-                whatsappTemplates?: unknown;
-              };
+              const fallbackTemplateList =
+                (await this.helpers.httpRequestWithAuthentication.call(
+                  this,
+                  "waapyApi",
+                  {
+                    method: "GET",
+                    url: `${baseUrl}/n8n/templates?searchName=${encodeURIComponent(selectedTemplateValue)}`,
+                    json: true,
+                  },
+                )) as {
+                  whatsappTemplates?: unknown;
+                };
 
               const matchedTemplate = ensureArray<TemplateListItem>(
                 fallbackTemplateList.whatsappTemplates,
@@ -1188,31 +1204,38 @@ export class Waapy implements INodeType {
               );
             }
 
-            responseData = await this.helpers.httpRequest({
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${credentials.apikey}`,
-              },
-              url: `${baseUrl}/n8n/messages/send-template`,
-              body: {
-                connectionName: this.getNodeParameter("connectionName", i, "", {
-                  extractValue: true,
-                }) as string,
-                recipient: toNumber,
-                message: {
-                  type: "template",
-                  template: {
-                    name: resolvedTemplateName,
-                    ...(Object.keys(dynamicData).length > 0
-                      ? {
-                          dynamicData: dynamicData,
-                        }
-                      : {}),
+            responseData =
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "POST",
+                  url: `${baseUrl}/n8n/messages/send-template`,
+                  body: {
+                    connectionName: this.getNodeParameter(
+                      "connectionName",
+                      i,
+                      "",
+                      {
+                        extractValue: true,
+                      },
+                    ) as string,
+                    recipient: toNumber,
+                    message: {
+                      type: "template",
+                      template: {
+                        name: resolvedTemplateName,
+                        ...(Object.keys(dynamicData).length > 0
+                          ? {
+                              dynamicData: dynamicData,
+                            }
+                          : {}),
+                      },
+                    },
                   },
+                  json: true,
                 },
-              },
-              json: true,
-            });
+              );
           }
         }
 
