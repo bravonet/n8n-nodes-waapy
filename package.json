@@ -7,6 +7,13 @@
   ],
   "license": "MIT",
   "homepage": "https://waapy.co",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bravonet/n8n-nodes-waapy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bravonet/n8n-nodes-waapy/issues"
+  },
   "author": {
     "name": "Bravo Net Solution",
     "email": "support@bravonet.my"
