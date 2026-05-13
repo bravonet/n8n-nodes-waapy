@@ -1,5 +1,12 @@
 # Changelog
 
+# [0.2.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.1.11...v0.2.0) (2026-05-13)
+
+
+### Features
+
+* **Waapy:** add ticket/contact label assignment ([7a0ecd9](https://github.com/bravonet/n8n-nodes-waapy/commit/7a0ecd9567bae8e6138f43444d94eda4b0434245))
+
 ## [0.1.11](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.1.10...v0.1.11) (2026-05-12)
 
 
