@@ -32,6 +32,12 @@ type TemplateListItem = {
   active?: boolean;
 };
 
+type LabelListItem = {
+  id?: string;
+  name?: string;
+  color?: string;
+};
+
 type QuickReplyButtonInput = {
   id: string;
   title: string;
@@ -243,6 +249,10 @@ export class Waapy implements INodeType {
         noDataExpression: true,
         options: [
           {
+            name: "Label",
+            value: "label",
+          },
+          {
             name: "Message",
             value: "message",
           },
@@ -280,6 +290,116 @@ export class Waapy implements INodeType {
           },
         ],
         default: "sendText",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: {
+          show: {
+            resource: ["label"],
+          },
+        },
+        options: [
+          {
+            name: "Assign Label",
+            value: "assignLabel",
+            description: "Add or delete a label on a ticket, contact, or both",
+            action: "Assign a label",
+          },
+        ],
+        default: "assignLabel",
+      },
+      {
+        displayName: "Ticket ID",
+        name: "ticketId",
+        type: "string",
+        required: true,
+        displayOptions: {
+          show: {
+            resource: ["label"],
+            operation: ["assignLabel"],
+          },
+        },
+        default: "",
+        description: "The ticket ID used to assign or remove the label",
+      },
+      {
+        displayName: "Apply To",
+        name: "target",
+        type: "options",
+        options: [
+          {
+            name: "Ticket Only",
+            value: "ticket",
+          },
+          {
+            name: "Contact Only",
+            value: "contact",
+          },
+          {
+            name: "Ticket and Contact",
+            value: "both",
+          },
+        ],
+        default: "ticket",
+        displayOptions: {
+          show: {
+            resource: ["label"],
+            operation: ["assignLabel"],
+          },
+        },
+        description: "Whether to update the ticket, the linked contact, or both",
+      },
+      {
+        displayName: "Action",
+        name: "action",
+        type: "options",
+        options: [
+          {
+            name: "Add",
+            value: "add",
+          },
+          {
+            name: "Delete",
+            value: "delete",
+          },
+        ],
+        default: "add",
+        displayOptions: {
+          show: {
+            resource: ["label"],
+            operation: ["assignLabel"],
+          },
+        },
+        description: "Whether to add or delete the selected label",
+      },
+      {
+        displayName: "Label",
+        name: "labelId",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        required: true,
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            hint: "Select a label",
+            typeOptions: {
+              searchListMethod: "searchLabels",
+              searchable: true,
+            },
+          },
+        ],
+        displayOptions: {
+          show: {
+            resource: ["label"],
+            operation: ["assignLabel"],
+          },
+        },
+        description: "The label to add or delete",
       },
       {
         displayName: "Connection Name",
@@ -792,6 +912,48 @@ export class Waapy implements INodeType {
           throw new NodeApiError(this.getNode(), error as any);
         }
       },
+      async searchLabels(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const credentials = await this.getCredentials("waapyApi");
+        const baseUrl = credentials["server-url"] as string;
+
+        let url = `${baseUrl}/n8n/labels`;
+        if (filter) {
+          url += `?searchName=${encodeURIComponent(filter)}`;
+        }
+
+        try {
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              {
+                method: "GET",
+                url,
+                json: true,
+              },
+            );
+
+          const labels = ensureArray<LabelListItem>(
+            (responseData as { labels?: unknown }).labels,
+          );
+
+          const results: INodePropertyOptions[] = labels
+            .map((label) => ({
+              name: label.name ?? label.id ?? "Unnamed Label",
+              value: label.id ?? "",
+            }))
+            .filter((label) => label.value !== "");
+
+          return {
+            results,
+          };
+        } catch (error) {
+          throw new NodeApiError(this.getNode(), error as any);
+        }
+      },
     },
   };
 
@@ -806,7 +968,46 @@ export class Waapy implements INodeType {
       try {
         let responseData;
 
-        if (resource === "message") {
+        if (resource === "label") {
+          if (operation === "assignLabel") {
+            const ticketId = `${this.getNodeParameter("ticketId", i)}`.trim();
+            const labelId = `${this.getNodeParameter("labelId", i, "", {
+              extractValue: true,
+            })}`.trim();
+            const target = this.getNodeParameter("target", i) as string;
+            const action = this.getNodeParameter("action", i) as string;
+            const credentials = await this.getCredentials("waapyApi");
+            const baseUrl = credentials["server-url"] as string;
+
+            if (ticketId.length === 0) {
+              throw new NodeOperationError(
+                this.getNode(),
+                "Ticket ID is required.",
+              );
+            }
+
+            if (labelId.length === 0) {
+              throw new NodeOperationError(this.getNode(), "Label is required.");
+            }
+
+            responseData =
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "POST",
+                  url: `${baseUrl}/n8n/tickets/labels`,
+                  body: {
+                    ticketId,
+                    target,
+                    action,
+                    labelId,
+                  },
+                  json: true,
+                },
+              );
+          }
+        } else if (resource === "message") {
           const toNumber = this.getNodeParameter("toNumber", i) as string;
           const credentials = await this.getCredentials("waapyApi");
           const baseUrl = credentials["server-url"] as string;
