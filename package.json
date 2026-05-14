@@ -55,10 +55,5 @@
   },
   "peerDependencies": {
     "n8n-workflow": "*"
-  },
-  "overrides": {
-    "@n8n/node-cli": {
-      "change-case": "4.1.2"
-    }
   }
 }

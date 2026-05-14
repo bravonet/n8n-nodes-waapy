@@ -4,6 +4,7 @@ import {
   INodeTypeDescription,
   IWebhookFunctions,
   IWebhookResponseData,
+  JsonObject,
   NodeApiError,
   NodeOperationError,
 } from "n8n-workflow";
@@ -52,6 +53,8 @@ const getErrorStatusCode = (error: unknown): number | undefined => {
 const isNotFoundError = (error: unknown): boolean =>
   getErrorStatusCode(error) === 404;
 
+// Trigger nodes are webhook entry points and should not be exposed as AI tools.
+// eslint-disable-next-line @n8n/community-nodes/node-usable-as-tool
 export class WaapyTrigger implements INodeType {
   description: INodeTypeDescription = {
     displayName: "WaaPy Trigger",
@@ -100,7 +103,7 @@ export class WaapyTrigger implements INodeType {
         ],
         default: ["message.received"],
         required: true,
-        description: "The events to listen.",
+        description: "The events to listen",
       },
     ],
   };
@@ -166,7 +169,7 @@ export class WaapyTrigger implements INodeType {
               );
             } catch (error) {
               if (!isNotFoundError(error)) {
-                throw new NodeApiError(this.getNode(), error as any, {
+                throw new NodeApiError(this.getNode(), error as JsonObject, {
                   message: "Failed to replace existing webhook registration",
                 });
               }
@@ -192,8 +195,8 @@ export class WaapyTrigger implements INodeType {
               options,
             );
 
-          if (responseData.id === undefined) {
-            throw new NodeApiError(this.getNode(), responseData as any, {
+          if ((responseData as { id?: unknown }).id === undefined) {
+            throw new NodeApiError(this.getNode(), responseData as JsonObject, {
               message: "Webhook creation failed",
             });
           }
@@ -201,7 +204,7 @@ export class WaapyTrigger implements INodeType {
           webhookData.webhookId = responseData.id as string;
           return true;
         } catch (error) {
-          throw new NodeApiError(this.getNode(), error as any);
+          throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
 
@@ -223,7 +226,7 @@ export class WaapyTrigger implements INodeType {
             );
           } catch (error) {
             if (!isNotFoundError(error)) {
-              throw new NodeApiError(this.getNode(), error as any);
+              throw new NodeApiError(this.getNode(), error as JsonObject);
             }
           }
           delete webhookData.webhookId;

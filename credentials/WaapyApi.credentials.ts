@@ -9,6 +9,7 @@ export class WaapyApi implements ICredentialType {
   name = "waapyApi";
   displayName = "WaaPy API";
   documentationUrl = "https://waapy.co";
+  icon = "file:../nodes/Waapy/waapy-logo.svg" as const;
   properties: INodeProperties[] = [
     {
       displayName: "Server URL",

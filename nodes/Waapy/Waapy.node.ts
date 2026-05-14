@@ -6,6 +6,7 @@ import {
   INodeListSearchResult,
   INodeType,
   INodeTypeDescription,
+  JsonObject,
   NodeApiError,
   NodeOperationError,
 } from "n8n-workflow";
@@ -221,6 +222,7 @@ export class Waapy implements INodeType {
     icon: "file:waapy-logo.svg",
     group: ["transform"],
     version: 1,
+    usableAsTool: true,
     subtitle: '={{$parameter["operation"]}}',
     description: "Interact with the WaaPy API to send WhatsApp messages",
     defaults: {
@@ -234,13 +236,6 @@ export class Waapy implements INodeType {
         required: true,
       },
     ],
-    requestDefaults: {
-      baseURL: '={{$credentials["server-url"]}}',
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    },
     properties: [
       {
         displayName: "Resource",
@@ -360,18 +355,22 @@ export class Waapy implements INodeType {
           {
             name: "Add",
             value: "add",
+            action: "Add a label",
           },
           {
             name: "Delete",
             value: "delete",
+            action: "Delete a label",
           },
           {
             name: "Delete All Labels",
             value: "deleteAll",
+            action: "Delete all labels",
           },
           {
             name: "Replace Label",
             value: "replace",
+            action: "Replace a label",
           },
         ],
         default: "add",
@@ -415,7 +414,6 @@ export class Waapy implements INodeType {
         name: "fromLabelId",
         type: "resourceLocator",
         default: { mode: "list", value: "" },
-        required: false,
         modes: [
           {
             displayName: "From List",
@@ -597,7 +595,7 @@ export class Waapy implements INodeType {
           },
         },
         description:
-          "Values for dynamic header placeholders. Leave empty if header has no placeholders",
+          "Values for dynamic header placeholders. Leave empty if header has no placeholders.",
       },
       {
         displayName: "Header Image URL",
@@ -686,7 +684,7 @@ export class Waapy implements INodeType {
           },
         },
         description:
-          "Values for dynamic body placeholders. Leave empty if body has no placeholders",
+          "Values for dynamic body placeholders. Leave empty if body has no placeholders.",
       },
       {
         displayName: "Button Parameters",
@@ -745,7 +743,7 @@ export class Waapy implements INodeType {
                 ],
                 default: "url",
                 description:
-                  "Button subtype. If left unchanged, runtime metadata validation will override when possible",
+                  "Button subtype. If left unchanged, runtime metadata validation will override when possible.",
               },
               {
                 displayName: "Value",
@@ -765,7 +763,7 @@ export class Waapy implements INodeType {
           },
         },
         description:
-          "Values for dynamic button placeholders. Leave empty if buttons are static",
+          "Values for dynamic button placeholders. Leave empty if buttons are static.",
       },
       {
         displayName: "Message Text",
@@ -819,7 +817,7 @@ export class Waapy implements INodeType {
           },
         },
         description:
-          "Optional reply buttons for this text message. Maximum 10 buttons",
+          "Optional reply buttons for this text message. Maximum 10 buttons.",
       },
       {
         displayName: "Image Source",
@@ -878,7 +876,6 @@ export class Waapy implements INodeType {
         displayName: "Caption",
         name: "caption",
         type: "string",
-        required: false,
         displayOptions: {
           show: {
             resource: ["message"],
@@ -917,18 +914,23 @@ export class Waapy implements INodeType {
               },
             );
 
-          const results: INodePropertyOptions[] = (
-            responseData.connections || []
-          ).map((connection: any) => ({
-            name: connection.name,
-            value: connection.name,
-          }));
+          const results: INodePropertyOptions[] = ensureArray<{ name?: string }>(
+            (responseData as { connections?: unknown }).connections,
+          )
+            .filter(
+              (connection): connection is { name: string } =>
+                typeof connection.name === "string" && connection.name.length > 0,
+            )
+            .map((connection) => ({
+              name: connection.name,
+              value: connection.name,
+            }));
 
           return {
             results,
           };
         } catch (error) {
-          throw new NodeApiError(this.getNode(), error as any);
+          throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
       async searchTemplates(
@@ -973,7 +975,7 @@ export class Waapy implements INodeType {
             results,
           };
         } catch (error) {
-          throw new NodeApiError(this.getNode(), error as any);
+          throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
       async searchLabels(
@@ -1015,7 +1017,7 @@ export class Waapy implements INodeType {
             results,
           };
         } catch (error) {
-          throw new NodeApiError(this.getNode(), error as any);
+          throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
     },
@@ -1044,6 +1046,7 @@ export class Waapy implements INodeType {
               throw new NodeOperationError(
                 this.getNode(),
                 "Ticket ID is required.",
+                { itemIndex: i },
               );
             }
 
@@ -1181,7 +1184,7 @@ export class Waapy implements INodeType {
             ) as string;
             const caption = this.getNodeParameter("caption", i) as string;
 
-            let body: {
+            const body: {
               connectionName: string;
               recipient: string;
               message: {
@@ -1374,7 +1377,7 @@ export class Waapy implements INodeType {
               ).find((template) => template.name === selectedTemplateValue);
 
               if (!matchedTemplate?.id) {
-                throw new NodeApiError(this.getNode(), error as any, {
+                throw new NodeApiError(this.getNode(), error as JsonObject, {
                   message: `Unable to resolve template details for "${selectedTemplateValue}"`,
                 });
               }
@@ -1561,7 +1564,7 @@ export class Waapy implements INodeType {
             error.context.itemIndex = i;
             throw error;
           }
-          throw new NodeApiError(this.getNode(), error as any);
+          throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       }
     }
