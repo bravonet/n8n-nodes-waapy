@@ -365,6 +365,10 @@ export class Waapy implements INodeType {
             name: "Delete",
             value: "delete",
           },
+          {
+            name: "Delete All Labels",
+            value: "deleteAll",
+          },
         ],
         default: "add",
         displayOptions: {
@@ -373,7 +377,7 @@ export class Waapy implements INodeType {
             operation: ["assignLabel"],
           },
         },
-        description: "Whether to add or delete the selected label",
+        description: "Whether to add, delete, or delete all labels",
       },
       {
         displayName: "Label",
@@ -397,6 +401,7 @@ export class Waapy implements INodeType {
           show: {
             resource: ["label"],
             operation: ["assignLabel"],
+            action: ["add", "delete"],
           },
         },
         description: "The label to add or delete",
@@ -971,9 +976,6 @@ export class Waapy implements INodeType {
         if (resource === "label") {
           if (operation === "assignLabel") {
             const ticketId = `${this.getNodeParameter("ticketId", i)}`.trim();
-            const labelId = `${this.getNodeParameter("labelId", i, "", {
-              extractValue: true,
-            })}`.trim();
             const target = this.getNodeParameter("target", i) as string;
             const action = this.getNodeParameter("action", i) as string;
             const credentials = await this.getCredentials("waapyApi");
@@ -986,8 +988,30 @@ export class Waapy implements INodeType {
               );
             }
 
-            if (labelId.length === 0) {
-              throw new NodeOperationError(this.getNode(), "Label is required.");
+            const body: {
+              ticketId: string;
+              target: string;
+              action: string;
+              labelId?: string;
+            } = {
+              ticketId,
+              target,
+              action,
+            };
+
+            if (action !== "deleteAll") {
+              const labelId = `${this.getNodeParameter("labelId", i, "", {
+                extractValue: true,
+              })}`.trim();
+
+              if (labelId.length === 0) {
+                throw new NodeOperationError(
+                  this.getNode(),
+                  "Label is required.",
+                );
+              }
+
+              body.labelId = labelId;
             }
 
             responseData =
@@ -997,12 +1021,7 @@ export class Waapy implements INodeType {
                 {
                   method: "POST",
                   url: `${baseUrl}/n8n/tickets/labels`,
-                  body: {
-                    ticketId,
-                    target,
-                    action,
-                    labelId,
-                  },
+                  body,
                   json: true,
                 },
               );
