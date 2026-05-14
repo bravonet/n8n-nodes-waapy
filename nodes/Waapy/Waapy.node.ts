@@ -369,6 +369,10 @@ export class Waapy implements INodeType {
             name: "Delete All Labels",
             value: "deleteAll",
           },
+          {
+            name: "Replace Label",
+            value: "replace",
+          },
         ],
         default: "add",
         displayOptions: {
@@ -377,7 +381,7 @@ export class Waapy implements INodeType {
             operation: ["assignLabel"],
           },
         },
-        description: "Whether to add, delete, or delete all labels",
+        description: "Whether to add, delete, delete all, or replace labels",
       },
       {
         displayName: "Label",
@@ -405,6 +409,61 @@ export class Waapy implements INodeType {
           },
         },
         description: "The label to add or delete",
+      },
+      {
+        displayName: "Old Label",
+        name: "fromLabelId",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        required: false,
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            hint: "Select the label to remove, if known",
+            typeOptions: {
+              searchListMethod: "searchLabels",
+              searchable: true,
+            },
+          },
+        ],
+        displayOptions: {
+          show: {
+            resource: ["label"],
+            operation: ["assignLabel"],
+            action: ["replace"],
+          },
+        },
+        description:
+          "Optional label to remove before adding the new label. If it is not assigned, the new label is still added.",
+      },
+      {
+        displayName: "New Label",
+        name: "toLabelId",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        required: true,
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            hint: "Select the label to add",
+            typeOptions: {
+              searchListMethod: "searchLabels",
+              searchable: true,
+            },
+          },
+        ],
+        displayOptions: {
+          show: {
+            resource: ["label"],
+            operation: ["assignLabel"],
+            action: ["replace"],
+          },
+        },
+        description: "The label to add after removing the old label, if provided",
       },
       {
         displayName: "Connection Name",
@@ -993,13 +1052,39 @@ export class Waapy implements INodeType {
               target: string;
               action: string;
               labelId?: string;
+              fromLabelId?: string;
+              toLabelId?: string;
             } = {
               ticketId,
               target,
               action,
             };
 
-            if (action !== "deleteAll") {
+            if (action === "replace") {
+              const fromLabelId = `${this.getNodeParameter(
+                "fromLabelId",
+                i,
+                "",
+                {
+                  extractValue: true,
+                },
+              )}`.trim();
+              const toLabelId = `${this.getNodeParameter("toLabelId", i, "", {
+                extractValue: true,
+              })}`.trim();
+
+              if (toLabelId.length === 0) {
+                throw new NodeOperationError(
+                  this.getNode(),
+                  "New Label is required.",
+                );
+              }
+
+              if (fromLabelId.length > 0) {
+                body.fromLabelId = fromLabelId;
+              }
+              body.toLabelId = toLabelId;
+            } else if (action !== "deleteAll") {
               const labelId = `${this.getNodeParameter("labelId", i, "", {
                 extractValue: true,
               })}`.trim();
