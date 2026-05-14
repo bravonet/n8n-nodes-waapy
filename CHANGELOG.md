@@ -1,5 +1,13 @@
 # Changelog
 
+# [0.3.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.2.0...v0.3.0) (2026-05-14)
+
+
+### Features
+
+* **waapy:** add delete all labels operation and adjust request body ([4e0f055](https://github.com/bravonet/n8n-nodes-waapy/commit/4e0f05501afc276548c31bca5637a561c7ac8dc2))
+* **waapy:** add replace label assignment action ([0168937](https://github.com/bravonet/n8n-nodes-waapy/commit/0168937dc9814ca6532f7347e234dd464bf02974))
+
 # [0.2.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.1.11...v0.2.0) (2026-05-13)
 
 
