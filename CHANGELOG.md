@@ -1,5 +1,13 @@
 # Changelog
 
+# [0.4.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.3.1...v0.4.0) (2026-05-22)
+
+
+### Features
+
+* add assign queue operation for Waapy node ([209e53f](https://github.com/bravonet/n8n-nodes-waapy/commit/209e53f61952ea31fd2fdd34b077d4f24b4596f9))
+* **nodes:** add ticket resource and update status operation ([bf7c288](https://github.com/bravonet/n8n-nodes-waapy/commit/bf7c2884c7add932e982cb8a3bf15abf9db4bd3b))
+
 ## [0.3.1](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.3.0...v0.3.1) (2026-05-14)
 
 # [0.3.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.2.0...v0.3.0) (2026-05-14)
