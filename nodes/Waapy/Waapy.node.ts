@@ -251,6 +251,10 @@ export class Waapy implements INodeType {
             name: "Message",
             value: "message",
           },
+          {
+            name: "Queue",
+            value: "queue",
+          },
         ],
         default: "message",
       },
@@ -305,6 +309,66 @@ export class Waapy implements INodeType {
           },
         ],
         default: "assignLabel",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: {
+          show: {
+            resource: ["queue"],
+          },
+        },
+        options: [
+          {
+            name: "Assign Queue",
+            value: "assignQueue",
+            description: "Assign a ticket to a queue",
+            action: "Assign a queue",
+          },
+        ],
+        default: "assignQueue",
+      },
+      {
+        displayName: "Ticket ID",
+        name: "ticketId",
+        type: "string",
+        required: true,
+        displayOptions: {
+          show: {
+            resource: ["queue"],
+            operation: ["assignQueue"],
+          },
+        },
+        default: "",
+        description: "The ticket ID to assign to the queue",
+      },
+      {
+        displayName: "Queue",
+        name: "queueId",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        required: true,
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            hint: "Select a queue",
+            typeOptions: {
+              searchListMethod: "searchQueues",
+              searchable: true,
+            },
+          },
+        ],
+        displayOptions: {
+          show: {
+            resource: ["queue"],
+            operation: ["assignQueue"],
+          },
+        },
+        description: "The queue to assign the ticket to",
       },
       {
         displayName: "Ticket ID",
@@ -1020,6 +1084,48 @@ export class Waapy implements INodeType {
           throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
+      async searchQueues(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const credentials = await this.getCredentials("waapyApi");
+        const baseUrl = credentials["server-url"] as string;
+
+        let url = `${baseUrl}/n8n/queues`;
+        if (filter) {
+          url += `?searchName=${encodeURIComponent(filter)}`;
+        }
+
+        try {
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              {
+                method: "GET",
+                url,
+                json: true,
+              },
+            );
+
+          const queues = ensureArray<{ id?: string; name?: string }>(
+            (responseData as { queues?: unknown }).queues,
+          );
+
+          const results: INodePropertyOptions[] = queues
+            .map((queue) => ({
+              name: queue.name ?? queue.id ?? "Unnamed Queue",
+              value: queue.id ?? "",
+            }))
+            .filter((queue) => queue.value !== "");
+
+          return {
+            results,
+          };
+        } catch (error) {
+          throw new NodeApiError(this.getNode(), error as JsonObject);
+        }
+      },
     },
   };
 
@@ -1110,6 +1216,46 @@ export class Waapy implements INodeType {
                   method: "POST",
                   url: `${baseUrl}/n8n/tickets/labels`,
                   body,
+                  json: true,
+                },
+              );
+          }
+        } else if (resource === "queue") {
+          if (operation === "assignQueue") {
+            const ticketId = `${this.getNodeParameter("ticketId", i)}`.trim();
+            const queueId = `${this.getNodeParameter("queueId", i, "", {
+              extractValue: true,
+            })}`.trim();
+            const credentials = await this.getCredentials("waapyApi");
+            const baseUrl = credentials["server-url"] as string;
+
+            if (ticketId.length === 0) {
+              throw new NodeOperationError(
+                this.getNode(),
+                "Ticket ID is required.",
+                { itemIndex: i },
+              );
+            }
+
+            if (queueId.length === 0) {
+              throw new NodeOperationError(
+                this.getNode(),
+                "Queue is required.",
+                { itemIndex: i },
+              );
+            }
+
+            responseData =
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "POST",
+                  url: `${baseUrl}/n8n/tickets/queue`,
+                  body: {
+                    ticketId,
+                    queueId,
+                  },
                   json: true,
                 },
               );
