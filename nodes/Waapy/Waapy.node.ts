@@ -255,6 +255,10 @@ export class Waapy implements INodeType {
             name: "Queue",
             value: "queue",
           },
+          {
+            name: "Ticket",
+            value: "ticket",
+          },
         ],
         default: "message",
       },
@@ -329,6 +333,84 @@ export class Waapy implements INodeType {
           },
         ],
         default: "assignQueue",
+      },
+      {
+        displayName: "Operation",
+        name: "operation",
+        type: "options",
+        noDataExpression: true,
+        displayOptions: {
+          show: {
+            resource: ["ticket"],
+          },
+        },
+        options: [
+          {
+            name: "Update Status",
+            value: "updateStatus",
+            description: "Update the status of a ticket",
+            action: "Update ticket status",
+          },
+        ],
+        default: "updateStatus",
+      },
+      {
+        displayName: "Ticket ID",
+        name: "ticketId",
+        type: "string",
+        required: true,
+        displayOptions: {
+          show: {
+            resource: ["ticket"],
+            operation: ["updateStatus"],
+          },
+        },
+        default: "",
+        description: "The ticket ID to update",
+      },
+      {
+        displayName: "Status",
+        name: "status",
+        type: "options",
+        required: true,
+        options: [
+          {
+            name: "Open",
+            value: "IN_PROGRESS",
+          },
+          {
+            name: "Pending",
+            value: "PENDING",
+          },
+          {
+            name: "Closed",
+            value: "CLOSED",
+          },
+        ],
+        default: "IN_PROGRESS",
+        displayOptions: {
+          show: {
+            resource: ["ticket"],
+            operation: ["updateStatus"],
+          },
+        },
+        description: "The new status for the ticket",
+      },
+      {
+        displayName: "User Email",
+        name: "userEmail",
+        type: "string",
+        required: true,
+        default: "",
+        placeholder: "user@example.com",
+        displayOptions: {
+          show: {
+            resource: ["ticket"],
+            operation: ["updateStatus"],
+            status: ["IN_PROGRESS"],
+          },
+        },
+        description: "The email of the user to assign the ticket to",
       },
       {
         displayName: "Ticket ID",
@@ -1126,6 +1208,54 @@ export class Waapy implements INodeType {
           throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
+      async searchUsers(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const credentials = await this.getCredentials("waapyApi");
+        const baseUrl = credentials["server-url"] as string;
+
+        let url = `${baseUrl}/n8n/users`;
+        if (filter) {
+          url += `?searchName=${encodeURIComponent(filter)}`;
+        }
+
+        try {
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              {
+                method: "GET",
+                url,
+                json: true,
+              },
+            );
+
+          const users = ensureArray<{
+            id?: string;
+            name?: string;
+            email?: string;
+          }>((responseData as { users?: unknown }).users);
+
+          const results: INodePropertyOptions[] = users
+            .map((user) => ({
+              name:
+                user.name ??
+                user.email ??
+                user.id ??
+                "Unnamed User",
+              value: user.id ?? "",
+            }))
+            .filter((user) => user.value !== "");
+
+          return {
+            results,
+          };
+        } catch (error) {
+          throw new NodeApiError(this.getNode(), error as JsonObject);
+        }
+      },
     },
   };
 
@@ -1256,6 +1386,60 @@ export class Waapy implements INodeType {
                     ticketId,
                     queueId,
                   },
+                  json: true,
+                },
+              );
+          }
+        } else if (resource === "ticket") {
+          if (operation === "updateStatus") {
+            const ticketId = `${this.getNodeParameter("ticketId", i)}`.trim();
+            const status = this.getNodeParameter("status", i) as string;
+            const credentials = await this.getCredentials("waapyApi");
+            const baseUrl = credentials["server-url"] as string;
+
+            if (ticketId.length === 0) {
+              throw new NodeOperationError(
+                this.getNode(),
+                "Ticket ID is required.",
+                { itemIndex: i },
+              );
+            }
+
+            const body: {
+              ticketId: string;
+              status: string;
+              userEmail?: string;
+            } = {
+              ticketId,
+              status,
+            };
+
+            if (status === "IN_PROGRESS") {
+              const userEmail = `${this.getNodeParameter(
+                "userEmail",
+                i,
+                "",
+              )}`.trim();
+
+              if (userEmail.length === 0) {
+                throw new NodeOperationError(
+                  this.getNode(),
+                  "User Email is required when status is Open.",
+                  { itemIndex: i },
+                );
+              }
+
+              body.userEmail = userEmail;
+            }
+
+            responseData =
+              await this.helpers.httpRequestWithAuthentication.call(
+                this,
+                "waapyApi",
+                {
+                  method: "POST",
+                  url: `${baseUrl}/n8n/tickets/status`,
+                  body,
                   json: true,
                 },
               );
