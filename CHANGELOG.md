@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.5.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.4.0...v0.5.0) (2026-06-12)
+
+
+### Bug Fixes
+
+* **waapy:** normalize base URL by removing trailing slashes ([02fe629](https://github.com/bravonet/n8n-nodes-waapy/commit/02fe6297899f76b8281a3b23808a248d54a10552))
+
+
+### Features
+
+* **Waapy:** add whatsapp connection option for template messages ([3b79a3e](https://github.com/bravonet/n8n-nodes-waapy/commit/3b79a3ebce811a6a8547d697963cd13f179211f7))
+
 # [0.4.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.3.1...v0.4.0) (2026-05-22)
 
 
