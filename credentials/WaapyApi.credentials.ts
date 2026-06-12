@@ -17,7 +17,7 @@ export class WaapyApi implements ICredentialType {
       type: "string",
       default: "https://localhost",
       placeholder: "Please enter the server URL",
-      description: "The base URL of the WaaPy API",
+      description: "The base URL of the WaaPy API. Do not include a trailing slash.",
     },
     {
       displayName: "API Key",

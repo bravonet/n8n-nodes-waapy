@@ -11,6 +11,8 @@ import {
   NodeOperationError,
 } from "n8n-workflow";
 
+const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, "");
+
 type TemplateButton = {
   type?: string;
   url?: string;
@@ -1002,7 +1004,7 @@ export class Waapy implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const credentials = await this.getCredentials("waapyApi");
-        const baseUrl = credentials["server-url"] as string;
+        const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
         let url = `${baseUrl}/n8n/connections`;
         if (filter) {
@@ -1045,7 +1047,7 @@ export class Waapy implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const credentials = await this.getCredentials("waapyApi");
-        const baseUrl = credentials["server-url"] as string;
+        const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
         let url = `${baseUrl}/n8n/templates`;
         if (filter) {
@@ -1090,7 +1092,7 @@ export class Waapy implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const credentials = await this.getCredentials("waapyApi");
-        const baseUrl = credentials["server-url"] as string;
+        const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
         let url = `${baseUrl}/n8n/labels`;
         if (filter) {
@@ -1132,7 +1134,7 @@ export class Waapy implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const credentials = await this.getCredentials("waapyApi");
-        const baseUrl = credentials["server-url"] as string;
+        const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
         let url = `${baseUrl}/n8n/queues`;
         if (filter) {
@@ -1174,7 +1176,7 @@ export class Waapy implements INodeType {
         filter?: string,
       ): Promise<INodeListSearchResult> {
         const credentials = await this.getCredentials("waapyApi");
-        const baseUrl = credentials["server-url"] as string;
+        const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
         let url = `${baseUrl}/n8n/users`;
         if (filter) {
@@ -1237,7 +1239,7 @@ export class Waapy implements INodeType {
             const target = this.getNodeParameter("target", i) as string;
             const action = this.getNodeParameter("action", i) as string;
             const credentials = await this.getCredentials("waapyApi");
-            const baseUrl = credentials["server-url"] as string;
+            const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
             if (ticketId.length === 0) {
               throw new NodeOperationError(
@@ -1318,7 +1320,7 @@ export class Waapy implements INodeType {
               extractValue: true,
             })}`.trim();
             const credentials = await this.getCredentials("waapyApi");
-            const baseUrl = credentials["server-url"] as string;
+            const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
             if (ticketId.length === 0) {
               throw new NodeOperationError(
@@ -1356,7 +1358,7 @@ export class Waapy implements INodeType {
             const ticketId = `${this.getNodeParameter("ticketId", i)}`.trim();
             const status = this.getNodeParameter("status", i) as string;
             const credentials = await this.getCredentials("waapyApi");
-            const baseUrl = credentials["server-url"] as string;
+            const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
             if (ticketId.length === 0) {
               throw new NodeOperationError(
@@ -1408,7 +1410,7 @@ export class Waapy implements INodeType {
         } else if (resource === "message") {
           const toNumber = this.getNodeParameter("toNumber", i) as string;
           const credentials = await this.getCredentials("waapyApi");
-          const baseUrl = credentials["server-url"] as string;
+          const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
           if (operation === "sendText") {
             const text = this.getNodeParameter("text", i) as string;

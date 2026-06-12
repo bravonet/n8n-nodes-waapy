@@ -53,6 +53,21 @@ const getErrorStatusCode = (error: unknown): number | undefined => {
 const isNotFoundError = (error: unknown): boolean =>
   getErrorStatusCode(error) === 404;
 
+const extractWebhookId = (responseData: unknown): string | undefined => {
+  if (typeof responseData !== "object" || responseData === null) return undefined;
+  const data = responseData as Record<string, unknown>;
+  return (
+    (data.id as string) ??
+    (data.webhookId as string) ??
+    (data._id as string) ??
+    (typeof data.data === "object" && data.data !== null
+      ? (data.data as Record<string, unknown>).id as string
+      : undefined)
+  ) ?? undefined;
+};
+
+const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, "");
+
 // Trigger nodes are webhook entry points and should not be exposed as AI tools.
 // eslint-disable-next-line @n8n/community-nodes/node-usable-as-tool
 export class WaapyTrigger implements INodeType {
@@ -115,7 +130,7 @@ export class WaapyTrigger implements INodeType {
         if (webhookData.webhookId !== undefined) {
           try {
             const credentials = await this.getCredentials("waapyApi");
-            const baseUrl = credentials["server-url"] as string;
+            const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
             const endpoint = `/n8n/webhooks/${webhookData.webhookId}`;
             const options = {
               method: "GET" as const,
@@ -161,7 +176,7 @@ export class WaapyTrigger implements INodeType {
 
         try {
           const credentials = await this.getCredentials("waapyApi");
-          const baseUrl = credentials["server-url"] as string;
+          const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
 
           if (webhookData.webhookId !== undefined) {
             try {
@@ -185,32 +200,55 @@ export class WaapyTrigger implements INodeType {
             delete webhookData.webhookId;
           }
 
-          const options = {
-            method: "POST" as const,
-            url: `${baseUrl}/n8n/webhooks`,
-            body: {
-              url: webhookUrl,
-              events: events,
-            },
-            json: true,
+          const requestBody = {
+            url: webhookUrl,
+            events: events,
           };
 
           const responseData =
             await this.helpers.httpRequestWithAuthentication.call(
               this,
               "waapyApi",
-              options,
+              {
+                method: "POST" as const,
+                url: `${baseUrl}/n8n/webhooks`,
+                body: requestBody,
+                json: true,
+              },
             );
 
-          if ((responseData as { id?: unknown }).id === undefined) {
-            throw new NodeApiError(this.getNode(), responseData as JsonObject, {
-              message: "Webhook creation failed",
-            });
+          const webhookId = extractWebhookId(responseData);
+
+          if (!webhookId) {
+            throw new NodeOperationError(
+              this.getNode(),
+              `Webhook creation failed: API response did not contain a webhook ID. Response: ${JSON.stringify(responseData)}`,
+            );
           }
 
-          webhookData.webhookId = responseData.id as string;
+          webhookData.webhookId = webhookId;
           return true;
         } catch (error) {
+          if (
+            error instanceof NodeApiError ||
+            error instanceof NodeOperationError
+          ) {
+            throw error;
+          }
+          const err = error as {
+            statusCode?: number;
+            message?: string;
+            body?: unknown;
+            response?: { body?: unknown };
+          };
+          // eslint-disable-next-line no-console
+          console.error(
+            `[WaapyTrigger] Webhook creation error: status=${
+              err.statusCode ?? "N/A"
+            }, message=${err.message ?? "N/A"}, body=${JSON.stringify(
+              err.response?.body ?? err.body ?? "N/A",
+            )}`,
+          );
           throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
@@ -220,7 +258,7 @@ export class WaapyTrigger implements INodeType {
         if (webhookData.webhookId !== undefined) {
           try {
             const credentials = await this.getCredentials("waapyApi");
-            const baseUrl = credentials["server-url"] as string;
+            const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
             const options = {
               method: "DELETE" as const,
               url: `${baseUrl}/n8n/webhooks/${webhookData.webhookId}`,
