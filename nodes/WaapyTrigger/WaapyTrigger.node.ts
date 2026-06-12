@@ -152,6 +152,13 @@ export class WaapyTrigger implements INodeType {
           );
         }
 
+        if (!Array.isArray(events) || events.length === 0) {
+          throw new NodeOperationError(
+            this.getNode(),
+            "At least one event must be selected.",
+          );
+        }
+
         try {
           const credentials = await this.getCredentials("waapyApi");
           const baseUrl = credentials["server-url"] as string;

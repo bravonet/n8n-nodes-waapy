@@ -966,29 +966,6 @@ export class Waapy implements INodeType {
           "Optional reply buttons for this text message. Maximum 10 buttons.",
       },
       {
-        displayName: "Image Source",
-        name: "imageUploadMethod",
-        type: "options",
-        options: [
-          {
-            name: "From URL",
-            value: "url",
-          },
-          {
-            name: "Upload File",
-            value: "upload",
-          },
-        ],
-        default: "url",
-        displayOptions: {
-          show: {
-            resource: ["message"],
-            operation: ["sendImage"],
-          },
-        },
-        description: "Whether to send an image from a URL or upload a file",
-      },
-      {
         displayName: "Image URL",
         name: "mediaUrl",
         type: "string",
@@ -997,26 +974,10 @@ export class Waapy implements INodeType {
           show: {
             resource: ["message"],
             operation: ["sendImage"],
-            imageUploadMethod: ["url"],
           },
         },
         default: "",
         description: "The URL of the image to send",
-      },
-      {
-        displayName: "Input Binary Field",
-        name: "binaryPropertyName",
-        type: "string",
-        default: "data",
-        required: true,
-        displayOptions: {
-          show: {
-            resource: ["message"],
-            operation: ["sendImage"],
-            imageUploadMethod: ["upload"],
-          },
-        },
-        description: "Name of the binary property containing the image data",
       },
       {
         displayName: "Caption",
@@ -1508,10 +1469,6 @@ export class Waapy implements INodeType {
                 },
               );
           } else if (operation === "sendImage") {
-            const imageUploadMethod = this.getNodeParameter(
-              "imageUploadMethod",
-              i,
-            ) as string;
             const caption = this.getNodeParameter("caption", i) as string;
 
             const body: {
@@ -1520,8 +1477,7 @@ export class Waapy implements INodeType {
               message: {
                 body: string;
                 type: string;
-                mediaUrl?: string;
-                mediaBase64?: string;
+                mediaUrl: string;
               };
             } = {
               connectionName: this.getNodeParameter("connectionName", i, "", {
@@ -1531,25 +1487,9 @@ export class Waapy implements INodeType {
               message: {
                 body: caption,
                 type: "text",
+                mediaUrl: this.getNodeParameter("mediaUrl", i) as string,
               },
             };
-
-            if (imageUploadMethod === "url") {
-              body.message.mediaUrl = this.getNodeParameter(
-                "mediaUrl",
-                i,
-              ) as string;
-            } else {
-              const binaryPropertyName = this.getNodeParameter(
-                "binaryPropertyName",
-                i,
-              ) as string;
-              const binaryData = this.helpers.assertBinaryData(
-                i,
-                binaryPropertyName,
-              );
-              body.message.mediaBase64 = `data:${binaryData.mimeType};base64,${binaryData.data}`;
-            }
 
             responseData =
               await this.helpers.httpRequestWithAuthentication.call(
