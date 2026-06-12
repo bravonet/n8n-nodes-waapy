@@ -632,10 +632,36 @@ export class Waapy implements INodeType {
         displayOptions: {
           show: {
             resource: ["message"],
-            operation: ["sendText", "sendImage", "sendTemplate"],
+            operation: ["sendText", "sendImage"],
           },
         },
         description: "The connection to use for sending the message",
+      },
+      {
+        displayName: "WhatsApp Connection",
+        name: "whatsappConnectionName",
+        type: "resourceLocator",
+        default: { mode: "list", value: "" },
+        required: true,
+        modes: [
+          {
+            displayName: "From List",
+            name: "list",
+            type: "list",
+            hint: "Select a WhatsApp connection",
+            typeOptions: {
+              searchListMethod: "searchWhatsAppConnections",
+              searchable: true,
+            },
+          },
+        ],
+        displayOptions: {
+          show: {
+            resource: ["message"],
+            operation: ["sendTemplate"],
+          },
+        },
+        description: "The WhatsApp connection to use for sending the template message",
       },
       {
         displayName: "Recipient Number",
@@ -1029,6 +1055,53 @@ export class Waapy implements INodeType {
             .filter(
               (connection): connection is { name: string } =>
                 typeof connection.name === "string" && connection.name.length > 0,
+            )
+            .map((connection) => ({
+              name: connection.name,
+              value: connection.name,
+            }));
+
+          return {
+            results,
+          };
+        } catch (error) {
+          throw new NodeApiError(this.getNode(), error as JsonObject);
+        }
+      },
+      async searchWhatsAppConnections(
+        this: ILoadOptionsFunctions,
+        filter?: string,
+      ): Promise<INodeListSearchResult> {
+        const credentials = await this.getCredentials("waapyApi");
+        const baseUrl = normalizeBaseUrl(credentials["server-url"] as string);
+
+        let url = `${baseUrl}/n8n/connections`;
+        if (filter) {
+          url += `?searchParam=${encodeURIComponent(filter)}`;
+        }
+
+        try {
+          const responseData =
+            await this.helpers.httpRequestWithAuthentication.call(
+              this,
+              "waapyApi",
+              {
+                method: "GET",
+                url,
+                json: true,
+              },
+            );
+
+          const results: INodePropertyOptions[] = ensureArray<{
+            name?: string;
+            type?: string;
+          }>((responseData as { connections?: unknown }).connections)
+            .filter(
+              (connection): connection is { name: string; type: string } =>
+                typeof connection.name === "string" &&
+                connection.name.length > 0 &&
+                typeof connection.type === "string" &&
+                connection.type.toUpperCase().startsWith("WHATSAPP"),
             )
             .map((connection) => ({
               name: connection.name,
@@ -1615,7 +1688,7 @@ export class Waapy implements INodeType {
                 {
                   method: "GET",
                   url: `${baseUrl}/n8n/templates/${templateId}?connectionName=${
-                    this.getNodeParameter("connectionName", i, "", {
+                    this.getNodeParameter("whatsappConnectionName", i, "", {
                       extractValue: true,
                     }) as string
                   }`,
@@ -1793,7 +1866,7 @@ export class Waapy implements INodeType {
                   url: `${baseUrl}/n8n/messages/send-template`,
                   body: {
                     connectionName: this.getNodeParameter(
-                      "connectionName",
+                      "whatsappConnectionName",
                       i,
                       "",
                       {
