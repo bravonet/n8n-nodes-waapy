@@ -235,20 +235,6 @@ export class WaapyTrigger implements INodeType {
           ) {
             throw error;
           }
-          const err = error as {
-            statusCode?: number;
-            message?: string;
-            body?: unknown;
-            response?: { body?: unknown };
-          };
-          // eslint-disable-next-line no-console
-          console.error(
-            `[WaapyTrigger] Webhook creation error: status=${
-              err.statusCode ?? "N/A"
-            }, message=${err.message ?? "N/A"}, body=${JSON.stringify(
-              err.response?.body ?? err.body ?? "N/A",
-            )}`,
-          );
           throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },
