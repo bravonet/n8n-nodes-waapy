@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.5.0...v0.5.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* handle webhook creation error without console log ([985d92a](https://github.com/bravonet/n8n-nodes-waapy/commit/985d92a242b107d9b6ad2769893cd5fab11886dc))
+
 # [0.5.0](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.4.0...v0.5.0) (2026-06-12)
 
 
