@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.5.3](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.5.2...v0.5.3) (2026-07-15)
+
 ## [0.5.1](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.5.0...v0.5.1) (2026-07-13)
 
 
