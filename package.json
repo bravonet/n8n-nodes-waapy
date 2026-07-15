@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-waapy",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Custom n8n nodes for the WaaPy API",
   "keywords": [
     "n8n-community-node-package"
@@ -25,8 +25,7 @@
     "dev": "n8n-node dev",
     "lint": "n8n-node lint",
     "lint:fix": "n8n-node lint --fix",
-    "release:it": "release-it",
-    "prepare": "husky"
+    "release:it": "release-it"
   },
   "files": [
     "dist"
