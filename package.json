@@ -28,7 +28,9 @@
     "release:it": "release-it"
   },
   "files": [
-    "dist"
+    "dist",
+    "!**/*.d.ts",
+    "!**/*.tsbuildinfo"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
