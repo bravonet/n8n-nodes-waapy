@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.5](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.5.4...v0.5.5) (2026-07-20)
+
+
+### Bug Fixes
+
+* add itemIndex to error handling and dark mode logo support ([2f06062](https://github.com/bravonet/n8n-nodes-waapy/commit/2f06062304974f27ac0baa93d24450b667269b10))
+
 ## [0.5.4](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.5.3...v0.5.4) (2026-07-16)
 
 ## [0.5.3](https://github.com/bravonet/n8n-nodes-waapy/compare/v0.5.2...v0.5.3) (2026-07-15)
