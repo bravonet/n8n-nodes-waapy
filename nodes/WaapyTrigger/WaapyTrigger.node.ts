@@ -6,6 +6,7 @@ import {
   IWebhookResponseData,
   JsonObject,
   NodeApiError,
+  NodeConnectionTypes,
   NodeOperationError,
 } from "n8n-workflow";
 
@@ -69,21 +70,22 @@ const extractWebhookId = (responseData: unknown): string | undefined => {
 const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, "");
 
 // Trigger nodes are webhook entry points and should not be exposed as AI tools.
-// eslint-disable-next-line @n8n/community-nodes/node-usable-as-tool
 export class WaapyTrigger implements INodeType {
   description: INodeTypeDescription = {
     displayName: "WaaPy Trigger",
     name: "waapyTrigger",
-    icon: "file:waapy-logo.svg",
+    icon: { light: "file:waapy-logo.svg", dark: "file:waapy-logo-dark.svg" },
     group: ["trigger"],
     version: 1,
+    usableAsTool: true,
+    subtitle: "on event",
     description:
       "Starts the workflow when WaaPy events occur (e.g., incoming messages)",
     defaults: {
       name: "WaaPy Trigger",
     },
     inputs: [],
-    outputs: ["main"],
+    outputs: [NodeConnectionTypes.Main],
     credentials: [
       {
         name: "waapyApi",
@@ -229,12 +231,6 @@ export class WaapyTrigger implements INodeType {
           webhookData.webhookId = webhookId;
           return true;
         } catch (error) {
-          if (
-            error instanceof NodeApiError ||
-            error instanceof NodeOperationError
-          ) {
-            throw error;
-          }
           throw new NodeApiError(this.getNode(), error as JsonObject);
         }
       },

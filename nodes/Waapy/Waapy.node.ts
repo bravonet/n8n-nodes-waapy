@@ -8,6 +8,7 @@ import {
   INodeTypeDescription,
   JsonObject,
   NodeApiError,
+  NodeConnectionTypes,
   NodeOperationError,
 } from "n8n-workflow";
 
@@ -221,7 +222,7 @@ export class Waapy implements INodeType {
   description: INodeTypeDescription = {
     displayName: "WaaPy",
     name: "waapy",
-    icon: "file:waapy-logo.svg",
+    icon: { light: "file:waapy-logo.svg", dark: "file:waapy-logo-dark.svg" },
     group: ["transform"],
     version: 1,
     usableAsTool: true,
@@ -230,8 +231,8 @@ export class Waapy implements INodeType {
     defaults: {
       name: "WaaPy",
     },
-    inputs: ["main"],
-    outputs: ["main"],
+    inputs: [NodeConnectionTypes.Main],
+    outputs: [NodeConnectionTypes.Main],
     credentials: [
       {
         name: "waapyApi",
@@ -276,12 +277,6 @@ export class Waapy implements INodeType {
         },
         options: [
           {
-            name: "Send Text",
-            value: "sendText",
-            description: "Send a text message",
-            action: "Send a text message",
-          },
-          {
             name: "Send Image",
             value: "sendImage",
             description: "Send an image message",
@@ -292,6 +287,12 @@ export class Waapy implements INodeType {
             value: "sendTemplate",
             description: "Send a template message",
             action: "Send a template message",
+          },
+          {
+            name: "Send Text",
+            value: "sendText",
+            description: "Send a text message",
+            action: "Send a text message",
           },
         ],
         default: "sendText",
@@ -377,16 +378,16 @@ export class Waapy implements INodeType {
         required: true,
         options: [
           {
+            name: "Closed",
+            value: "CLOSED",
+          },
+          {
             name: "Open",
             value: "IN_PROGRESS",
           },
           {
             name: "Pending",
             value: "PENDING",
-          },
-          {
-            name: "Closed",
-            value: "CLOSED",
           },
         ],
         default: "IN_PROGRESS",
@@ -439,6 +440,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select a queue",
             typeOptions: {
               searchListMethod: "searchQueues",
@@ -474,16 +477,16 @@ export class Waapy implements INodeType {
         type: "options",
         options: [
           {
-            name: "Ticket Only",
-            value: "ticket",
-          },
-          {
             name: "Contact Only",
             value: "contact",
           },
           {
             name: "Ticket and Contact",
             value: "both",
+          },
+          {
+            name: "Ticket Only",
+            value: "ticket",
           },
         ],
         default: "ticket",
@@ -541,6 +544,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select a label",
             typeOptions: {
               searchListMethod: "searchLabels",
@@ -567,6 +572,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select the label to remove, if known",
             typeOptions: {
               searchListMethod: "searchLabels",
@@ -595,6 +602,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select the label to add",
             typeOptions: {
               searchListMethod: "searchLabels",
@@ -622,6 +631,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select a connection name",
             typeOptions: {
               searchListMethod: "searchConnections",
@@ -648,6 +659,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select a WhatsApp connection",
             typeOptions: {
               searchListMethod: "searchWhatsAppConnections",
@@ -689,6 +702,8 @@ export class Waapy implements INodeType {
             displayName: "From List",
             name: "list",
             type: "list",
+            // @ts-expect-error — required by @n8n/community-nodes/require-param-default scanner rule
+            default: "",
             hint: "Select a template name",
             typeOptions: {
               searchListMethod: "searchTemplates",
@@ -723,10 +738,10 @@ export class Waapy implements INodeType {
         name: "headerType",
         type: "options",
         options: [
-          { name: "None / Text", value: "text" },
-          { name: "Image", value: "image" },
-          { name: "Video", value: "video" },
           { name: "Document", value: "document" },
+          { name: "Image", value: "image" },
+          { name: "None / Text", value: "text" },
+          { name: "Video", value: "video" },
         ],
         default: "text",
         displayOptions: {
@@ -1352,6 +1367,7 @@ export class Waapy implements INodeType {
                 throw new NodeOperationError(
                   this.getNode(),
                   "New Label is required.",
+                  { itemIndex: i },
                 );
               }
 
@@ -1368,6 +1384,7 @@ export class Waapy implements INodeType {
                 throw new NodeOperationError(
                   this.getNode(),
                   "Label is required.",
+                  { itemIndex: i },
                 );
               }
 
@@ -1510,6 +1527,7 @@ export class Waapy implements INodeType {
               throw new NodeOperationError(
                 this.getNode(),
                 "Send Text supports a maximum of 10 reply buttons.",
+                { itemIndex: i },
               );
             }
 
@@ -1724,6 +1742,7 @@ export class Waapy implements INodeType {
               if (!matchedTemplate?.id) {
                 throw new NodeApiError(this.getNode(), error as JsonObject, {
                   message: `Unable to resolve template details for "${selectedTemplateValue}"`,
+                  itemIndex: i,
                 });
               }
 
@@ -1777,6 +1796,7 @@ export class Waapy implements INodeType {
                 throw new NodeOperationError(
                   this.getNode(),
                   `Header requires ${templateRequirements.headerParamCount} parameter(s), but ${sanitizedHeaderParameters.length} provided.`,
+                  { itemIndex: i },
                 );
               }
 
@@ -1787,6 +1807,7 @@ export class Waapy implements INodeType {
                 throw new NodeOperationError(
                   this.getNode(),
                   `Body requires ${templateRequirements.bodyParamCount} parameter(s), but ${sanitizedBodyParameters.length} provided.`,
+                  { itemIndex: i },
                 );
               }
 
@@ -1799,6 +1820,7 @@ export class Waapy implements INodeType {
                   throw new NodeOperationError(
                     this.getNode(),
                     `Button index ${buttonRequirement.index} requires ${buttonRequirement.paramCount} parameter(s), but ${providedParameters.length} provided.`,
+                    { itemIndex: i },
                   );
                 }
               }
@@ -1813,6 +1835,7 @@ export class Waapy implements INodeType {
                   throw new NodeOperationError(
                     this.getNode(),
                     `Button index ${providedButtonIndex} does not have dynamic placeholders in this template.`,
+                    { itemIndex: i },
                   );
                 }
               }
@@ -1854,6 +1877,7 @@ export class Waapy implements INodeType {
               throw new NodeOperationError(
                 this.getNode(),
                 "Template details do not include a template name.",
+                { itemIndex: i },
               );
             }
 
@@ -1894,8 +1918,8 @@ export class Waapy implements INodeType {
 
         returnData.push(
           Array.isArray(responseData)
-            ? { json: responseData[0] }
-            : { json: responseData },
+            ? { json: responseData[0], pairedItem: { item: i } }
+            : { json: responseData, pairedItem: { item: i } },
         );
       } catch (error) {
         if (this.continueOnFail()) {
@@ -1905,11 +1929,7 @@ export class Waapy implements INodeType {
             pairedItem: i,
           });
         } else {
-          if (error.context) {
-            error.context.itemIndex = i;
-            throw error;
-          }
-          throw new NodeApiError(this.getNode(), error as JsonObject);
+          throw new NodeApiError(this.getNode(), error as JsonObject, { itemIndex: i });
         }
       }
     }
